@@ -8,14 +8,19 @@ datasource db {
 }
 
 model PageSpeedResult {
-  id               Int      @id @default(autoincrement())
-  url              String
-  device           String
-  performanceScore Float
-  fcp              Float
-  lcp              Float
-  cls              Float
-  tti              Float
-  tbt              Float
-  createdAt        DateTime @default(now())
+  id                 Int      @id @default(autoincrement())
+  url                String
+  device             String
+  performanceScore   Float
+  accessibilityScore Float?
+  bestPracticesScore Float?
+  seoScore           Float?
+  pwaScore           Float?
+  fcp                Float
+  lcp                Float
+  cls                Float
+  tti                Float
+  tbt                Float
+  speedIndex         Float?
+  createdAt          DateTime @default(now())
 }

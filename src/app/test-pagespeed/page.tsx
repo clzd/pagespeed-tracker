@@ -1,14 +1,18 @@
-// app/test-pagespeed/page.tsx
 'use client';
 
 import React, { useState } from 'react';
 
 export default function TestPageSpeed() {
-	const [url, setUrl] = useState('');
-	const [result, setResult] = useState('');
+	const [urls, setUrls] = useState('');
+	const [results, setResults] = useState([]);
+	const [loading, setLoading] = useState(false);
+	const [error, setError] = useState('');
 
-	const runTest = async () => {
-		setResult('Running test...');
+	const runTest = async (e) => {
+		e.preventDefault();
+		setLoading(true);
+		setError('');
+		setResults([]);
 
 		try {
 			const response = await fetch('/api/run-pagespeed', {
@@ -16,32 +20,61 @@ export default function TestPageSpeed() {
 				headers: {
 					'Content-Type': 'application/json',
 				},
-				body: JSON.stringify({ url }),
+				body: JSON.stringify({ urls }),
 			});
 
 			const data = await response.json();
 
-			if (response.ok) {
-				setResult(`Test completed successfully.\nScore: ${data.score}\nResult ID: ${data.resultId}`);
-			} else {
-				setResult(`Error: ${data.message}`);
+			if (!response.ok) {
+				throw new Error(data.message || 'An error occurred');
 			}
+
+			setResults(data.results);
 		} catch (error) {
-			setResult(`Error: ${error.message}`);
+			setError(error.message);
+		} finally {
+			setLoading(false);
 		}
 	};
 
 	return (
-		<div>
-			<h1>PageSpeed API Test</h1>
-			<input
-				type="text"
-				value={url}
-				onChange={(e) => setUrl(e.target.value)}
-				placeholder="Enter URL to test"
-			/>
-			<button onClick={runTest}>Run Test</button>
-			<pre>{result}</pre>
+		<div className="p-4">
+			<h1 className="text-2xl font-bold mb-4">PageSpeed Test</h1>
+			<form onSubmit={runTest} className="mb-4">
+				<input
+					type="text"
+					value={urls}
+					onChange={(e) => setUrls(e.target.value)}
+					placeholder="Enter URL(s) separated by commas"
+					className="w-full p-2 border rounded"
+				/>
+				<button
+					type="submit"
+					disabled={loading}
+					className="mt-2 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:bg-gray-400"
+				>
+					{loading ? 'Running...' : 'Run Test'}
+				</button>
+			</form>
+
+			{error && <p className="text-red-500">{error}</p>}
+
+			{results.length > 0 && (
+				<div>
+					<h2 className="text-xl font-semibold mb-2">Results:</h2>
+					{results.map((result, index) => (
+						<div key={index} className="mb-4 p-4 border rounded">
+							<p><strong>URL:</strong> {result.url}</p>
+							<p><strong>Device:</strong> {result.device}</p>
+							<p><strong>Performance Score:</strong> {result.performanceScore.toFixed(2)}</p>
+							<p><strong>Accessibility Score:</strong> {result.accessibilityScore.toFixed(2)}</p>
+							<p><strong>Best Practices Score:</strong> {result.bestPracticesScore.toFixed(2)}</p>
+							<p><strong>SEO Score:</strong> {result.seoScore.toFixed(2)}</p>
+							<p><strong>PWA Score:</strong> {result.pwaScore.toFixed(2)}</p>
+						</div>
+					))}
+				</div>
+			)}
 		</div>
 	);
 }
